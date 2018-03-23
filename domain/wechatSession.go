@@ -24,8 +24,8 @@ type WechatSession struct {
 func (we *WechatSessionRequest) GetWechatSession(sessionID string) (WechatSession, error) {
 	var err error
 	session := new(WechatSession)
-	appid, err := util.Config.String("Wechat.appid")
-	secret, err := util.Config.String("Wechat.secret")
+	appid, _ := util.Config.String("Wechat.appid")
+	secret, _ := util.Config.String("Wechat.secret")
 	we.Appid = appid
 	we.Secret = secret
 	url, err := util.Config.String("Wechat.session.url")
@@ -38,7 +38,7 @@ func (we *WechatSessionRequest) GetWechatSession(sessionID string) (WechatSessio
 		session.Openid = "o5gGe4khB5GaEXO-Dn2waDD13zSs"
 		session.SessionKey = "egvKJxQKzT2IamEYHQRLQA=="
 		session.Unionid = "unionid"
-		redisClient := util.GetRedisClient()
+		redisClient := util.GetRedisClient(util.Config)
 		conn := redisClient.Get()
 		defer conn.Close()
 		if _, err = conn.Do("SET", sessionID, session.Openid); err == nil {

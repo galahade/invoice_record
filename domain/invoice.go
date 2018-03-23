@@ -26,7 +26,7 @@ type Invoice struct {
 
 
 func QueryAllInvoices(openid string) (invoiceList []Invoice, err error){
-	conn := util.GetRedisClient().Get()
+	conn := util.GetRedisClient(util.Config).Get()
 	defer conn.Close()
 	if result, err1 := conn.Do("KEYS", fmt.Sprintf(invoiceKeysPattern, openid)); err1 == nil {
 		keyList := result.([]interface{})
@@ -51,7 +51,7 @@ func QueryByNo(code, openid string) (Invoice, bool) {
 	invoiceKey := fmt.Sprintf(invoiceKeyPattern, openid, code)
 	invoice := new(Invoice)
 	invoice.Code = code
-	redisClient := util.GetRedisClient()
+	redisClient := util.GetRedisClient(util.Config)
 	conn := redisClient.Get()
 	defer conn.Close()
 	if b, err := redis.Bytes(conn.Do("GET", invoiceKey)); err == nil {
@@ -64,7 +64,7 @@ func QueryByNo(code, openid string) (Invoice, bool) {
 
 func CreateNewInvoice(invoice *Invoice, openid string) (ok bool, err error) {
 	invoice.CreateDate = time.Now()
-	redisClient := util.GetRedisClient()
+	redisClient := util.GetRedisClient(util.Config)
 	conn := redisClient.Get()
 	defer conn.Close()
 	if b, err := json.Marshal(invoice); err == nil {

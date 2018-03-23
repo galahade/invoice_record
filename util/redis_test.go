@@ -7,7 +7,8 @@ import (
 )
 
 func TestGetRedisClient(t *testing.T) {
-	pool := GetRedisClient()
+	cfg := LoadYamflConfigFile("../config.yml")
+	pool := GetRedisClient(cfg)
 	conn := pool.Get()
 	result, err := conn.Do("SET", "key", "value", "100")
 	result, err = conn.Do("EXPIRE", "key", 100)
@@ -19,7 +20,8 @@ func TestGetRedisClient(t *testing.T) {
 }
 
 func TestRedisKeys(t *testing.T) {
-	conn := GetRedisClient().Get()
+	cfg := LoadYamflConfigFile("../config.yml")
+	conn := GetRedisClient(cfg).Get()
 	var err error
 	if b, err1 := conn.Do("KEYS", "invoice::o5gGe4khB5GaEXO-Dn2waDD13zSs::*"); err1 == nil {
 		assert.NotEmpty(t, b)
@@ -32,7 +34,8 @@ func TestRedisKeys(t *testing.T) {
 }
 
 func TestRedisKeysNoResult(t *testing.T) {
-	conn := GetRedisClient().Get()
+	cfg := LoadYamflConfigFile("../config.yml")
+	conn := GetRedisClient(cfg).Get()
 	var err error
 	if b, err1 := conn.Do("KEYS", "invoice::o5gGe4khB5GaEXO::*"); err1 == nil {
 		assert.Empty(t, b)

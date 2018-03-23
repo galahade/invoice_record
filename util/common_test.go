@@ -15,7 +15,8 @@ func TestGenerateNewSessionID(t *testing.T) {
 }
 
 func TestRedisGetNil(t *testing.T) {
-	conn := GetRedisClient().Get()
+	cfg := LoadYamflConfigFile("../config.yml")
+	conn := GetRedisClient(cfg).Get()
 	defer conn.Close()
 	b, err := redis.Bytes(conn.Do("GET", "test"))
 	assert.Equal(t, redis.ErrNil, err)
