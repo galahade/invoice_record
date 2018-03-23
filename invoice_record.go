@@ -7,10 +7,13 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/galahade/invoice_record/middleware"
 	"github.com/galahade/invoice_record/util"
+	"os"
+	"fmt"
 )
 
 func main() {
-	util.Config = util.LoadYamflConfigFile("config.yml")
+	path, _ := os.Getwd()
+	util.Config = util.LoadYamflConfigFile(fmt.Sprintf("%s/config.yml",path))
 	//	flag.Parse()
 	router := gin.Default()
 	store := sessions.NewCookieStore([]byte("secret"))
