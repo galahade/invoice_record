@@ -10,6 +10,7 @@ import (
 	"os"
 	"fmt"
 	"flag"
+	"net/http"
 )
 
 func main() {
@@ -22,7 +23,12 @@ func main() {
 	router := gin.Default()
 	store := sessions.NewCookieStore([]byte("secret"))
 	router.Use(sessions.Sessions("wechat", store))
-
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "OK",
+			"message": "welcome to my site.",
+		})
+	})
 	router.POST("/wechat/login", c.Login)
 
 	authorized := router.Group("/")
