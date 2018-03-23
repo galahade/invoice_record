@@ -9,12 +9,16 @@ import (
 	"github.com/galahade/invoice_record/util"
 	"os"
 	"fmt"
+	"flag"
 )
 
 func main() {
-	path, _ := os.Getwd()
-	util.Config = util.LoadYamflConfigFile(fmt.Sprintf("%s/config.yml",path))
-	//	flag.Parse()
+	var env string
+	var port int
+	flag.StringVar(&env, "env", "", "application enviroment")
+	flag.IntVar(&port, "p", 8080, "application port number")
+	flag.Parse()
+	setConfigFile(env)
 	router := gin.Default()
 	store := sessions.NewCookieStore([]byte("secret"))
 	router.Use(sessions.Sessions("wechat", store))
@@ -36,6 +40,21 @@ func main() {
 	//	testing := authorized.Group("testing")
 //		testing.GET("/analytics", analyticsEndpoint)
 	}
-	router.Run(":8080")
+	router.Run(fmt.Sprintf(":%d",port))
+}
 
+func setConfigFile(env string) {
+	path, _ := os.Getwd()
+	var configFilePath string
+	switch env {
+	case "":
+		configFilePath = "config.yml"
+	case "test":
+		configFilePath = "config_test.yml"
+	case "prod":
+		configFilePath = "config_prod.yml"
+	default:
+		configFilePath = "config.yml"
+	}
+	util.Config = util.LoadYamflConfigFile(fmt.Sprintf("%s/%s",path, configFilePath))
 }
