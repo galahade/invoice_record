@@ -46,7 +46,8 @@ func main() {
 	//	testing := authorized.Group("testing")
 //		testing.GET("/analytics", analyticsEndpoint)
 	}
-	router.Run(fmt.Sprintf(":%d",port))
+	//router.Run(fmt.Sprintf(":%d",port))
+	router.RunTLS(fmt.Sprintf(":%d", port), "1_wechat.yuboxuan.club_bundle.crt", "2_wechat.yuboxuan.club.key")
 }
 
 func setConfigFile(env string) {
