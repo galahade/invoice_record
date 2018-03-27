@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"flag"
 	"net/http"
+	"log"
 )
 
 func main() {
@@ -47,7 +48,10 @@ func main() {
 //		testing.GET("/analytics", analyticsEndpoint)
 	}
 	//router.Run(fmt.Sprintf(":%d",port))
-	router.RunTLS(fmt.Sprintf(":%d", port), "1_wechat.yuboxuan.club_bundle.crt", "2_wechat.yuboxuan.club.key")
+	err := router.RunTLS(fmt.Sprintf(":%d", port), "2_wechat.yuboxuan.club.crt", "3_wechat.yuboxuan.club.key")
+	if(err != nil) {
+		log.Fatal(err)
+	}
 }
 
 func setConfigFile(env string) {
