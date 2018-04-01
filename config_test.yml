@@ -1,8 +1,9 @@
 # Wechat auth config.
 Wechat:
   appid: wxa5e84ef1c0f19775
-  secret: 1e24f049d8e8cb3e7a2456d974269053
+  secret: 78789944bda2a39d54f0a73e49cb890f
   session:
     url: "https://api.weixin.qq.com/sns/jscode2session?"
 redis:
   url: 140.143.207.177:6379
+  password: 29335523b38924f2cc30274c7d0b8177362427c16d8dbc582ae80217b2d71881

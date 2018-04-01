@@ -3,7 +3,6 @@ package domain
 import (
 	"fmt"
 	"time"
-	"github.com/galahade/invoice_record/util"
 	"github.com/garyburd/redigo/redis"
 	"github.com/golang/glog"
 )
@@ -25,9 +24,7 @@ type Invoice struct {
 }
 
 
-func QueryAllInvoices(openid string) (invoiceList []Invoice, err error){
-	conn := util.GetRedisClient(util.Config).Get()
-	defer conn.Close()
+func QueryAllInvoices(openid string, conn redis.Conn) (invoiceList []Invoice, err error){
 	if result, err1 := conn.Do("KEYS", fmt.Sprintf(invoiceKeysPattern, openid)); err1 == nil {
 		keyList := result.([]interface{})
 		if len(keyList) > 0 {
@@ -46,28 +43,23 @@ func QueryAllInvoices(openid string) (invoiceList []Invoice, err error){
 //	redis.Bytes(conn.Do("", args ...interface{}), err error)
 }
 
-func QueryByNo(code, openid string) (Invoice, bool) {
+func QueryByNo(code, openid string, conn redis.Conn) (Invoice, bool) {
 	ok := true
 	invoiceKey := fmt.Sprintf(invoiceKeyPattern, openid, code)
 	invoice := new(Invoice)
 	invoice.Code = code
-	redisClient := util.GetRedisClient(util.Config)
-	conn := redisClient.Get()
-	defer conn.Close()
 	if b, err := redis.Bytes(conn.Do("GET", invoiceKey)); err == nil {
-		json.Unmarshal(b, &invoice)
+		json.Unmarshal(b, invoice)
 	} else {
 		ok = false
 	}
 	return *invoice, ok
 }
 
-func CreateNewInvoice(invoice *Invoice, openid string) (ok bool, err error) {
+func CreateNewInvoice(invoice *Invoice, openid string, conn redis.Conn) (bool, error) {
 	invoice.CreateDate = time.Now()
-	redisClient := util.GetRedisClient(util.Config)
-	conn := redisClient.Get()
-	defer conn.Close()
-	if b, err := json.Marshal(invoice); err == nil {
+	var err error
+	if b, err1 := json.Marshal(invoice); err1 == nil {
 		invoiceKey := fmt.Sprintf(invoiceKeyPattern, openid, invoice.Code)
 		if status, err := conn.Do("SETNX", invoiceKey, b); err == err {
 			glog.Infof("SETNX status is %d", status)
@@ -81,7 +73,7 @@ func CreateNewInvoice(invoice *Invoice, openid string) (ok bool, err error) {
 			}
 		}
 	} else {
-			return false, err
+			return false, err1
 	}
 	return false, err
 }

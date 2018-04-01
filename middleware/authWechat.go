@@ -3,8 +3,6 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/galahade/invoice_record/util"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -20,7 +18,7 @@ func AuthWechat() gin.HandlerFunc {
 	var wechatsession WechatBaseModel
 	return func(c *gin.Context) {
 		if sessionid := extractSessionID(c); sessionid != "" {
-			conn := util.GetRedisClient(util.Config).Get()
+			conn := c.MustGet(RedisConnKey).(*redis.Pool).Get()
 			defer conn.Close()
 			if b, err := redis.Bytes(conn.Do("GET", sessionid)); err == nil {
 				openid := string(b)

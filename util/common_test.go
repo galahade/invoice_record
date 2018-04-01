@@ -5,24 +5,33 @@ import (
 	"github.com/stretchr/testify/assert"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
+	"log"
 )
 
 func TestGenerateNewSessionID(t *testing.T) {
-	session, err := GenerateNewSessionID();
-	assert.Empty(t, err)
+	session:= GenerateNewSessionID();
 	fmt.Printf("session id is : %s", session)
 	assert.NotEmpty(t, session,)
 }
 
 func TestRedisGetNil(t *testing.T) {
-	cfg := LoadYamflConfigFile("../config.yml")
-	conn := GetRedisClient(cfg).Get()
+	pool := GetRedisPool(LoadYamlConfigFile(GetRootPath()+"/config.yml"))
+	defer pool.Close()
+	conn := pool.Get()
 	defer conn.Close()
 	b, err := redis.Bytes(conn.Do("GET", "test"))
 	assert.Equal(t, redis.ErrNil, err)
 	assert.Empty(t, b)
 }
 
-func TestLoadYamlConfigFile(t *testing.T) {
-	LoadYamflConfigFile("../config.yml")
+
+func TestGetRootPath(t *testing.T) {
+	path := GetRootPath()
+	log.Printf("Root Path is : %s", path)
+}
+
+
+
+func TestTestEnv(t *testing.T) {
+	testEnv()
 }

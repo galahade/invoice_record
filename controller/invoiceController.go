@@ -7,13 +7,17 @@ import (
 	"github.com/galahade/invoice_record/domain"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/garyburd/redigo/redis"
+	"github.com/galahade/invoice_record/middleware"
 )
 
 func GetInvoicesList(c *gin.Context) {
 	status := http.StatusBadRequest
 	response := new(InvoiceListResponseModel)
+	conn := c.MustGet(middleware.RedisConnKey).(*redis.Pool).Get()
+	defer conn.Close()
 	response.Status = "OK"
-	if invoices, err := domain.QueryAllInvoices(getOpenID(c)); err == nil {
+	if invoices, err := domain.QueryAllInvoices(getOpenID(c), conn); err == nil {
 		invoiceModleList := make([]invoiceModle, len(invoices))
 		response.InvoiceList = invoiceModleList
 		for i, invoice := range invoices {
@@ -36,7 +40,9 @@ func GetInvoicesList(c *gin.Context) {
 // Get invoice info by invoice number
 func GetInvoiceInfoByNo(c *gin.Context) {
 	invoiceCode := c.Param("invoice_code")
-	invoice, ok := domain.QueryByNo(invoiceCode, getOpenID(c))
+	conn := c.MustGet(middleware.RedisConnKey).(*redis.Pool).Get()
+	defer conn.Close()
+	invoice, ok := domain.QueryByNo(invoiceCode, getOpenID(c), conn)
 	if ok {
 		c.JSON(http.StatusOK, invoice)
 	} else {
@@ -47,13 +53,15 @@ func GetInvoiceInfoByNo(c *gin.Context) {
 func AddInvoice(c *gin.Context) {
 	status := http.StatusBadRequest
 	invoiceModle := new(InvoiceResponseModle)
+	conn := c.MustGet(middleware.RedisConnKey).(*redis.Pool).Get()
+	defer conn.Close()
 	if err := c.ShouldBindJSON(invoiceModle); err == nil {
 		invoice := new(domain.Invoice)
 		invoice.Code = invoiceModle.InvoiceCode
 		invoice.No = invoiceModle.Number
 		invoice.Amount = invoiceModle.Amount
 		invoice.Date = invoiceModle.Date
-		if ok, err := domain.CreateNewInvoice(invoice, getOpenID(c)); err == nil {
+		if ok, err := domain.CreateNewInvoice(invoice, getOpenID(c), conn); err == nil {
 			if !ok {
 				status = http.StatusFound
 				invoiceModle.Status = "This invoice info has been stored."

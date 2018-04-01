@@ -1,32 +1,34 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	c "github.com/galahade/invoice_record/controller"
-	_ "flag"
-	"github.com/gin-contrib/sessions"
-	"github.com/galahade/invoice_record/middleware"
-	"github.com/galahade/invoice_record/util"
-	"os"
 	"fmt"
-	"flag"
-	"net/http"
 	"log"
+	"net/http"
+	c "github.com/galahade/invoice_record/controller"
+	"github.com/galahade/invoice_record/middleware"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+	"github.com/szuecs/gin-glog"
+	"time"
 )
 
+var env string
+var port int
+
 func main() {
-	var env string
-	var port int
-	flag.StringVar(&env, "env", "", "application enviroment")
-	flag.IntVar(&port, "p", 8080, "application port number")
-	flag.Parse()
-	setConfigFile(env)
-	router := gin.Default()
+	getParams()
+	initProjectConfit()
+	initRedis()
+	router :=gin.New()
+	router.Use(ginglog.Logger(3 * time.Second), gin.Recovery())
+	router.Use(middleware.SetupConfig(cfg))
+	router.Use(middleware.SetupRedisConn(pool))
 	store := sessions.NewCookieStore([]byte("secret"))
 	router.Use(sessions.Sessions("wechat", store))
+
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"status": "OK",
+			"status":  "OK",
 			"message": "welcome to my site.",
 		})
 	})
@@ -41,31 +43,17 @@ func main() {
 		authorized.GET("/invoices/:invoice_code", c.GetInvoiceInfoByNo)
 		authorized.POST("/invoice", c.AddInvoice)
 		authorized.GET("/invoices", c.GetInvoicesList)
-//		authorized.POST("/read", readEndpoint)
+		//		authorized.POST("/read", readEndpoint)
 
 		// nested group
-	//	testing := authorized.Group("testing")
-//		testing.GET("/analytics", analyticsEndpoint)
+		//	testing := authorized.Group("testing")
+		//		testing.GET("/analytics", analyticsEndpoint)
 	}
 	//router.Run(fmt.Sprintf(":%d",port))
 	err := router.RunTLS(fmt.Sprintf(":%d", port), "2_wechat.yuboxuan.club.crt", "3_wechat.yuboxuan.club.key")
-	if(err != nil) {
+	if err != nil {
 		log.Fatal(err)
 	}
+	pool.Close()
 }
 
-func setConfigFile(env string) {
-	path, _ := os.Getwd()
-	var configFilePath string
-	switch env {
-	case "":
-		configFilePath = "config.yml"
-	case "test":
-		configFilePath = "config_test.yml"
-	case "prod":
-		configFilePath = "config_prod.yml"
-	default:
-		configFilePath = "config.yml"
-	}
-	util.Config = util.LoadYamflConfigFile(fmt.Sprintf("%s/%s",path, configFilePath))
-}

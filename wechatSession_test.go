@@ -10,8 +10,13 @@ import (
 
 func TestWechatSession(t *testing.T) {
 	request := new(domain.WechatSessionRequest)
-	sessionID, err := util.GenerateNewSessionID()
-	session, err := request.GetWechatSession(sessionID)
+	sessionID := util.GenerateNewSessionID()
+	cfg := util.LoadYamlConfigFile(fmt.Sprintf("%s/%s", util.GetRootPath(), "config.yml"))
+	pool := util.GetRedisPool(cfg)
+	defer pool.Close()
+	conn := pool.Get()
+	defer conn.Close()
+	session, err := request.GetWechatSession(sessionID, conn, cfg)
 	fmt.Printf("error is : %s", err)
 	assert.Empty(t, err,)
 	assert.NotEmpty(t,request.Appid)

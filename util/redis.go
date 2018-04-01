@@ -1,32 +1,34 @@
 package util
 
 import (
-	"github.com/garyburd/redigo/redis"
-	"sync"
-	"log"
 	"fmt"
+	"log"
+	"sync"
+	"github.com/garyburd/redigo/redis"
 	"github.com/olebedev/config"
 )
 
-var redisClient *redis.Pool
+var redisPool *redis.Pool
 var once sync.Once
 
-func GetRedisClient(cfg config.Config) *redis.Pool {
+// GetRedisPool return a redis pool to connect to redis server
+func GetRedisPool(cfg config.Config) *redis.Pool {
 	once.Do(func() {
 		tmp, err := cfg.String("redis.url")
-		if err != nil {
+		pwd, err1 := cfg.String("redis.password")
+		if err != nil || err1 != nil {
 			panic(fmt.Sprintf("Fail to read redis server config"))
 		}
 
-		redisClient = redis.NewPool(func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", tmp)
+		redisPool = redis.NewPool(func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", tmp, redis.DialPassword(pwd))
 
 			if err != nil {
-				log.Fatalf("connect to %s failed with err : %s. ",tmp, err)
+				log.Fatalf("connect to %s failed with err : %s. ", tmp, err)
 				return nil, err
 			}
 			return c, err
 		}, 10)
 	})
-	return redisClient
+	return redisPool
 }
