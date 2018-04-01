@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/szuecs/gin-glog"
 	"time"
+	"github.com/galahade/invoice_record/util"
 )
 
 var env string
@@ -50,7 +51,9 @@ func main() {
 		//		testing.GET("/analytics", analyticsEndpoint)
 	}
 	//router.Run(fmt.Sprintf(":%d",port))
-	err := router.RunTLS(fmt.Sprintf(":%d", port), "2_wechat.yuboxuan.club.crt", "3_wechat.yuboxuan.club.key")
+	certfffificaton := fmt.Sprintf("%s/%s",util.GetRootPath(),"2_wechat.yuboxuan.club.crt")
+	key := fmt.Sprintf("%s/%s", util.GetRootPath(), "3_wechat.yuboxuan.club.key")
+	err := router.RunTLS(fmt.Sprintf(":%d", port), certfffificaton, key)
 	if err != nil {
 		log.Fatal(err)
 	}
