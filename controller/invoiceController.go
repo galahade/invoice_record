@@ -3,7 +3,6 @@ package controller
 import (
 	"fmt"
 	"net/http"
-
 	"github.com/galahade/invoice_record/domain"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"

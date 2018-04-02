@@ -18,7 +18,7 @@ invoice domain
 type Invoice struct {
 	Code       string
 	No         string
-	Amount     float64
+	Amount     string
 	Date       JsonTime
 	CreateDate time.Time
 }

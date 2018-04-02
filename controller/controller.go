@@ -17,7 +17,7 @@ type InvoiceResponseModle struct {
 type invoiceModle struct {
 	InvoiceCode string `json:"code"`
 	Number string `json:"number"`
-	Amount float64 `json:"amount"`
+	Amount string `json:"amount"`
 	Date domain.JsonTime `json:"date"`
 	CreateDate time.Time `json:"createDate"`
 }
