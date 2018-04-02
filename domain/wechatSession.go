@@ -6,6 +6,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/garyburd/redigo/redis"
 	"github.com/olebedev/config"
+	"github.com/galahade/invoice_record/util"
 )
 
 type WechatSessionRequest struct {
@@ -24,7 +25,7 @@ type WechatSession struct {
 	ErrMSG     string `json:"errmsg"`
 }
 
-func (we *WechatSessionRequest) GetWechatSession(sessionID string, conn redis.Conn, cfg config.Config ) (WechatSession, error) {
+func (we *WechatSessionRequest) GetWechatSession(conn redis.Conn, cfg config.Config ) (WechatSession, error) {
 	var err error
 	session := new(WechatSession)
 	appid, _ := cfg.String("Wechat.appid")
@@ -36,7 +37,7 @@ func (we *WechatSessionRequest) GetWechatSession(sessionID string, conn redis.Co
 		panic("Fail to load wechat auth config")
 	}
 	if session.setOpenID(we.ComposeCode2SessionURL(url)); err == nil {
-		//TO-DO this need to implement by http request.
+		sessionID := util.GenerateNewSessionID()
 		session.SessionID = sessionID
 		if _, err = conn.Do("SET", sessionID, session.Openid); err == nil {
 			conn.Do("EXPIRE", sessionID, 1800)
