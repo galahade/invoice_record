@@ -14,7 +14,7 @@ import (
 func GetInvoicesList(c *gin.Context) {
 	status := http.StatusBadRequest
 	response := new(InvoiceListResponseModel)
-	conn := c.MustGet(middleware.RedisConnKey).(*redis.Pool).Get()
+	conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
 	defer conn.Close()
 	response.Status = "OK"
 	if invoices, err := domain.QueryAllInvoices(getOpenID(c), conn); err == nil {
@@ -40,7 +40,7 @@ func GetInvoicesList(c *gin.Context) {
 // Get invoice info by invoice number
 func GetInvoiceInfoByNo(c *gin.Context) {
 	invoiceCode := c.Param("invoice_code")
-	conn := c.MustGet(middleware.RedisConnKey).(*redis.Pool).Get()
+	conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
 	defer conn.Close()
 	invoice, ok := domain.QueryByNo(invoiceCode, getOpenID(c), conn)
 	if ok {
@@ -53,7 +53,7 @@ func GetInvoiceInfoByNo(c *gin.Context) {
 func AddInvoice(c *gin.Context) {
 	status := http.StatusBadRequest
 	invoiceModle := new(InvoiceResponseModle)
-	conn := c.MustGet(middleware.RedisConnKey).(*redis.Pool).Get()
+	conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
 	defer conn.Close()
 	if err := c.ShouldBindJSON(invoiceModle); err == nil {
 		invoice := new(domain.Invoice)

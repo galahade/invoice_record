@@ -18,7 +18,7 @@ func AuthWechat() gin.HandlerFunc {
 	var wechatsession WechatBaseModel
 	return func(c *gin.Context) {
 		if sessionid := extractSessionID(c); sessionid != "" {
-			conn := c.MustGet(RedisConnKey).(*redis.Pool).Get()
+			conn := c.MustGet(RedisConnKey).(redis.Conn)
 			defer conn.Close()
 			if b, err := redis.Bytes(conn.Do("GET", sessionid)); err == nil {
 				openid := string(b)
