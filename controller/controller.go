@@ -6,15 +6,16 @@ import (
 	"time"
 )
 
-type InvoiceResponseModle struct {
+type InvoiceResponseModel struct {
 	middleware.WechatBaseModel
-	//Sessionid string `json:"sessionid"`
-//	Status    string `json:"status"`
-	//	Message   string `json:"message"`
-	invoiceModle
+	InvoiceCode string `json:"code"`
+	Number string `json:"number"`
+	Amount string `json:"amount"`
+	Date domain.JsonDashTime `json:"date"`
+	CreateDate domain.JsonDashTime `json:"createDate"`
 }
 
-type invoiceModle struct {
+type invoiceModel struct {
 	InvoiceCode string `json:"code"`
 	Number string `json:"number"`
 	Amount string `json:"amount"`
@@ -24,5 +25,5 @@ type invoiceModle struct {
 
 type InvoiceListResponseModel struct {
 	middleware.WechatBaseModel
-	InvoiceList []invoiceModle `json:"invoiceList"`
+	InvoiceList []InvoiceResponseModel `json:"invoiceList"`
 }

@@ -12,6 +12,8 @@ import (
 const (
 	//DateString is date format
 	DateString string = "20060102"
+
+	DateDashString string = "2006-01-02"
 	//TimeString is datetime format
 	TimeString string = "2006-01-02T15:04:05.000Z"
 )

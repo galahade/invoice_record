@@ -10,6 +10,10 @@ import (
 	"github.com/galahade/invoice_record/middleware"
 )
 
+const (
+	ErrorStatus = "error"
+)
+
 func GetInvoicesList(c *gin.Context) {
 	status := http.StatusBadRequest
 	response := new(InvoiceListResponseModel)
@@ -17,20 +21,20 @@ func GetInvoicesList(c *gin.Context) {
 	defer conn.Close()
 	response.Status = "OK"
 	if invoices, err := domain.QueryAllInvoices(getOpenID(c), conn); err == nil {
-		invoiceModleList := make([]invoiceModle, len(invoices))
+		invoiceModleList := make([]InvoiceResponseModel, len(invoices))
 		response.InvoiceList = invoiceModleList
 		for i, invoice := range invoices {
-			invoiceM := new(invoiceModle)
+			invoiceM := new(InvoiceResponseModel)
 			invoiceM.InvoiceCode = invoice.Code
 			invoiceM.Number = invoice.No
 			invoiceM.Amount = invoice.Amount
 			invoiceM.Date =  invoice.Date
-			invoiceM.CreateDate = invoice.CreateDate
+			invoiceM.CreateDate = domain.JsonDashTime(invoice.CreateDate)
 			invoiceModleList[i] = *invoiceM
 		}
 		status = http.StatusOK
 	} else {
-		response.Status = "error"
+		response.Status = ErrorStatus
 		response.Message = fmt.Sprintf("Query Invoices from DB err : %s", err)
 	}
 	c.JSON(status, response)
@@ -51,39 +55,39 @@ func GetInvoiceInfoByNo(c *gin.Context) {
 
 func AddInvoice(c *gin.Context) {
 	status := http.StatusBadRequest
-	invoiceModle := new(InvoiceResponseModle)
+	invoiceModel := new(invoiceModel)
+	invoiceResponseModel := new(InvoiceResponseModel)
 	conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
 	defer conn.Close()
-	if err := c.ShouldBindJSON(invoiceModle); err == nil {
+	if err := c.ShouldBindJSON(invoiceModel); err == nil {
 		invoice := new(domain.Invoice)
-		invoice.Code = invoiceModle.InvoiceCode
-		invoice.No = invoiceModle.Number
-		invoice.Amount = invoiceModle.Amount
-		invoice.Date = invoiceModle.Date
-		if ok, err := domain.CreateNewInvoice(invoice, getOpenID(c), conn); err == nil {
+		invoice.Code = invoiceModel.InvoiceCode
+		invoice.No = invoiceModel.Number
+		invoice.Amount = invoiceModel.Amount
+		invoice.Date = domain.JsonDashTime(invoiceModel.Date)
+		if ok, err := invoice.CreateNewInvoice(getOpenID(c), conn); err == nil {
 			if !ok {
 				status = http.StatusFound
-				invoiceModle.Status = "This invoice info has been stored."
-
+				invoiceResponseModel.Status = "Found"
 			} else {
 				status = http.StatusCreated
-				invoiceModle.Status = "OK"
-				invoiceModle.InvoiceCode = invoice.Code
-				invoiceModle.Number = invoice.No
-				invoiceModle.Amount = invoice.Amount
-				invoiceModle.Date = invoice.Date
-				invoiceModle.CreateDate = invoice.CreateDate
+				invoiceResponseModel.Status = "OK"
+				invoiceResponseModel.InvoiceCode = invoice.Code
+				invoiceResponseModel.Number = invoice.No
+				invoiceResponseModel.Amount = invoice.Amount
+				invoiceResponseModel.Date = invoice.Date
+				invoiceResponseModel.CreateDate = domain.JsonDashTime(invoice.CreateDate)
 			}
 		} else {
 			status = http.StatusBadRequest
-			invoiceModle.Status = "error"
-			invoiceModle.Message = fmt.Sprintf("Store invoice err : %s", err)
+			invoiceResponseModel.Status = ErrorStatus
+			invoiceResponseModel.Message = fmt.Sprintf("Store invoice err : %s", err)
 		}
 	} else {
-		invoiceModle.Status = "error"
-		invoiceModle.Message = fmt.Sprintf("invoice json struct error : %s", err)
+		invoiceResponseModel.Status = ErrorStatus
+		invoiceResponseModel.Message = fmt.Sprintf("invoice json struct error : %s", err)
 	}
-	c.JSON(status, invoiceModle)
+	c.JSON(status, invoiceResponseModel)
 
 }
 

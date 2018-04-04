@@ -19,7 +19,7 @@ type Invoice struct {
 	Code       string
 	No         string
 	Amount     string
-	Date       JsonTime
+	Date       JsonDashTime
 	CreateDate time.Time
 }
 
@@ -40,7 +40,6 @@ func QueryAllInvoices(openid string, conn redis.Conn) (invoiceList []Invoice, er
 		err = err1
 	}
 	return
-//	redis.Bytes(conn.Do("", args ...interface{}), err error)
 }
 
 func QueryByNo(code, openid string, conn redis.Conn) (Invoice, bool) {
@@ -56,7 +55,7 @@ func QueryByNo(code, openid string, conn redis.Conn) (Invoice, bool) {
 	return *invoice, ok
 }
 
-func CreateNewInvoice(invoice *Invoice, openid string, conn redis.Conn) (bool, error) {
+func (invoice *Invoice) CreateNewInvoice(openid string, conn redis.Conn) (bool, error) {
 	invoice.CreateDate = time.Now()
 	var err error
 	if b, err1 := json.Marshal(invoice); err1 == nil {
