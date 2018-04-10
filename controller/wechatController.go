@@ -39,6 +39,6 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusBadRequest, gin.H{
 		"status": "error",
-		"error":  message,
+		"message":  message,
 	})
 }

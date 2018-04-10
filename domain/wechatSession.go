@@ -17,7 +17,7 @@ type WechatSessionRequest struct {
 }
 
 type WechatSession struct {
-	SessionID  string `json:"sessionid"`
+	SessionID  string `json:"-"`
 	Openid     string `json:"openid"`
 	SessionKey string `json:"session_key"`
 	Unionid    string `json:"unionid"`
@@ -36,7 +36,7 @@ func (we *WechatSessionRequest) GetWechatSession(conn redis.Conn, cfg config.Con
 	if err != nil {
 		panic("Fail to load wechat auth config")
 	}
-	if session.setOpenID(we.ComposeCode2SessionURL(url)); err == nil {
+	if err1 := session.setOpenID(we.ComposeCode2SessionURL(url)); err1 == nil {
 		sessionID := util.GenerateNewSessionID()
 		session.SessionID = sessionID
 		if _, err = conn.Do("SET", sessionID, session.Openid); err == nil {
@@ -44,11 +44,13 @@ func (we *WechatSessionRequest) GetWechatSession(conn redis.Conn, cfg config.Con
 			var b []byte
 			if b, err = json.Marshal(session); err == nil {
 				glog.V(3).Infof("wechat store to db value is : %s", string(b))
-				if _, err = conn.Do("SET", session.Openid, b); err == nil {
+				if _, err = conn.Do("SET", fmt.Sprintf("openid::%s", session.Openid), b); err == nil {
 					return *session, nil
 				}
 			}
 		}
+	} else {
+		err = err1
 	}
 
 	return *session, err

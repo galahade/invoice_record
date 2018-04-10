@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	invoiceKeyPattern = "invoice::%s::%s"
-	invoiceKeysPattern = "invoice::%s::*"
+	InvoiceKeyPattern = "invoice::%s::%s::%s"
+	InvoiceKeysPattern = "invoice::%s::*"
 )
 
 /*
@@ -25,7 +25,7 @@ type Invoice struct {
 
 
 func QueryAllInvoices(openid string, conn redis.Conn) (invoiceList []Invoice, err error){
-	if result, err1 := conn.Do("KEYS", fmt.Sprintf(invoiceKeysPattern, openid)); err1 == nil {
+	if result, err1 := conn.Do("KEYS", fmt.Sprintf(InvoiceKeysPattern, openid)); err1 == nil {
 		keyList := result.([]interface{})
 		if len(keyList) > 0 {
 			invoiceList = make([]Invoice,len(keyList))
@@ -42,9 +42,9 @@ func QueryAllInvoices(openid string, conn redis.Conn) (invoiceList []Invoice, er
 	return
 }
 
-func QueryByNo(code, openid string, conn redis.Conn) (Invoice, bool) {
+func QueryByNo(code, no, openid string, conn redis.Conn) (Invoice, bool) {
 	ok := true
-	invoiceKey := fmt.Sprintf(invoiceKeyPattern, openid, code)
+	invoiceKey := fmt.Sprintf(InvoiceKeyPattern, openid, code, no)
 	invoice := new(Invoice)
 	invoice.Code = code
 	if b, err := redis.Bytes(conn.Do("GET", invoiceKey)); err == nil {
@@ -59,8 +59,8 @@ func (invoice *Invoice) CreateNewInvoice(openid string, conn redis.Conn) (bool, 
 	invoice.CreateDate = time.Now()
 	var err error
 	if b, err1 := json.Marshal(invoice); err1 == nil {
-		invoiceKey := fmt.Sprintf(invoiceKeyPattern, openid, invoice.Code)
-		if status, err := conn.Do("SETNX", invoiceKey, b); err == err {
+		invoiceKey := fmt.Sprintf(InvoiceKeyPattern, openid, invoice.Code, invoice.No)
+		if status, err := conn.Do("SETNX", invoiceKey, b); err == nil {
 			glog.Infof("SETNX status is %d", status)
 			switch status {
 			case int64(0):

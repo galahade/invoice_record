@@ -3,11 +3,13 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
+
 	"github.com/galahade/invoice_record/domain"
+	"github.com/galahade/invoice_record/middleware"
+	"github.com/garyburd/redigo/redis"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/garyburd/redigo/redis"
-	"github.com/galahade/invoice_record/middleware"
 )
 
 const (
@@ -28,7 +30,7 @@ func GetInvoicesList(c *gin.Context) {
 			invoiceM.InvoiceCode = invoice.Code
 			invoiceM.Number = invoice.No
 			invoiceM.Amount = invoice.Amount
-			invoiceM.Date =  invoice.Date
+			invoiceM.Date = invoice.Date
 			invoiceM.CreateDate = domain.JsonDashTime(invoice.CreateDate)
 			invoiceModleList[i] = *invoiceM
 		}
@@ -42,15 +44,30 @@ func GetInvoicesList(c *gin.Context) {
 
 // Get invoice info by invoice number
 func GetInvoiceInfoByNo(c *gin.Context) {
-	invoiceCode := c.Param("invoice_code")
-	conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
-	defer conn.Close()
-	invoice, ok := domain.QueryByNo(invoiceCode, getOpenID(c), conn)
-	if ok {
-		c.JSON(http.StatusOK, invoice)
+	invoiceCodeNo := c.Param("invoice_code")
+	invoiceInfos := strings.Split(invoiceCodeNo, ":")
+	if len(invoiceInfos) == 2 {
+		conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
+		defer conn.Close()
+		invoice, ok := domain.QueryByNo(invoiceInfos[0], invoiceInfos[1], getOpenID(c), conn)
+		if ok {
+			invoiceM := new(InvoiceResponseModel)
+			invoiceM.InvoiceCode = invoice.Code
+			invoiceM.Number = invoice.No
+			invoiceM.Amount = invoice.Amount
+			invoiceM.Date = invoice.Date
+			invoiceM.CreateDate = domain.JsonDashTime(invoice.CreateDate)
+			c.JSON(http.StatusOK, invoiceM)
+		} else {
+			c.JSON(http.StatusNotFound, "{}")
+		}
 	} else {
-		c.JSON(http.StatusNotFound, "{}")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  ErrorStatus,
+			"message": "Request param must be in format of code:no",
+		})
 	}
+
 }
 
 func AddInvoice(c *gin.Context) {
@@ -88,7 +105,6 @@ func AddInvoice(c *gin.Context) {
 		invoiceResponseModel.Message = fmt.Sprintf("invoice json struct error : %s", err)
 	}
 	c.JSON(status, invoiceResponseModel)
-
 }
 
 func getOpenID(c *gin.Context) string {
