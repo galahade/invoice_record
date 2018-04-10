@@ -58,8 +58,8 @@ func main() {
 		//		testing.GET("/analytics", analyticsEndpoint)
 	}
 	//router.Run(fmt.Sprintf(":%d",port))
-	crt := fmt.Sprintf("%s/%s",util.GetRootPath(),"2_wechat.yuboxuan.club.crt")
-	key := fmt.Sprintf("%s/%s", util.GetRootPath(), "3_wechat.yuboxuan.club.key")
+	crt := fmt.Sprintf("%s/%s",util.GetRootPath(),"1_wechat.yuboxuan.club_bundle.crt")
+	key := fmt.Sprintf("%s/%s", util.GetRootPath(), "2_wechat.yuboxuan.club.key")
 	err := router.RunTLS(fmt.Sprintf(":%d", port), crt, key)
 	if err != nil {
 		log.Fatal(err)
