@@ -28,7 +28,7 @@ type WechatSession struct {
 func (we *WechatSessionRequest) GetWechatSession(conn redis.Conn, cfg config.Config ) (WechatSession, error) {
 	var err error
 	session := new(WechatSession)
-	appid, _ := cfg.String("Wechat.appid") 
+	appid, _ := cfg.String("Wechat.appid")
 	secret, _ := cfg.String("Wechat.secret")
 	we.Appid = appid
 	we.Secret = secret

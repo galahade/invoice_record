@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
 	"github.com/galahade/invoice_record/domain"
 	"github.com/galahade/invoice_record/middleware"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/glog"
 )
 
 const (
@@ -31,7 +31,9 @@ func GetInvoicesList(c *gin.Context) {
 			invoiceM.Number = invoice.No
 			invoiceM.Amount = invoice.Amount
 			invoiceM.Date = invoice.Date
-			invoiceM.CreateDate = domain.JsonDashTime(invoice.CreateDate)
+			invoiceM.CreateDate = domain.JsonTime(invoice.CreateDate)
+			invoiceM.SubmitPerson = invoice.SubmitPerson
+			invoiceM.Note = invoice.Note
 			invoiceModleList[i] = *invoiceM
 		}
 		status = http.StatusOK
@@ -42,7 +44,7 @@ func GetInvoicesList(c *gin.Context) {
 	c.JSON(status, response)
 }
 
-// Get invoice info by invoice number
+//GetInvoiceInfoByNo Invoice number
 func GetInvoiceInfoByNo(c *gin.Context) {
 	invoiceCodeNo := c.Param("invoice_code")
 	invoiceInfos := strings.Split(invoiceCodeNo, ":")
@@ -56,7 +58,9 @@ func GetInvoiceInfoByNo(c *gin.Context) {
 			invoiceM.Number = invoice.No
 			invoiceM.Amount = invoice.Amount
 			invoiceM.Date = invoice.Date
-			invoiceM.CreateDate = domain.JsonDashTime(invoice.CreateDate)
+			invoiceM.SubmitPerson = invoice.SubmitPerson
+			invoiceM.Note = invoice.Note
+			invoiceM.CreateDate = domain.JsonTime(invoice.CreateDate)
 			c.JSON(http.StatusOK, invoiceM)
 		} else {
 			c.JSON(http.StatusNotFound, "{}")
@@ -72,28 +76,34 @@ func GetInvoiceInfoByNo(c *gin.Context) {
 
 func AddInvoice(c *gin.Context) {
 	status := http.StatusBadRequest
-	invoiceModel := new(invoiceModel)
+	invoiceModel := new(InvoiceModel)
 	invoiceResponseModel := new(InvoiceResponseModel)
 	conn := c.MustGet(middleware.RedisConnKey).(redis.Conn)
 	defer conn.Close()
 	if err := c.ShouldBindJSON(invoiceModel); err == nil {
+		glog.V(3).Infof("\nAdd Invoice request is: %#v\n", invoiceModel)
 		invoice := new(domain.Invoice)
 		invoice.Code = invoiceModel.InvoiceCode
 		invoice.No = invoiceModel.Number
 		invoice.Amount = invoiceModel.Amount
-		invoice.Date = domain.JsonDashTime(invoiceModel.Date)
+		invoice.Date = invoiceModel.Date
+		invoice.SubmitPerson = invoiceModel.SubmitPerson
+		invoice.Note = invoiceModel.Note
+
 		if ok, err := invoice.CreateNewInvoice(getOpenID(c), conn); err == nil {
+			invoiceResponseModel.InvoiceCode = invoice.Code
+			invoiceResponseModel.Number = invoice.No
+			invoiceResponseModel.Amount = invoice.Amount
+			invoiceResponseModel.Date = invoice.Date
+			invoiceResponseModel.CreateDate = domain.JsonTime(invoice.CreateDate)
+			invoiceResponseModel.SubmitPerson = invoice.SubmitPerson
+			invoiceResponseModel.Note = invoice.Note
 			if !ok {
 				status = http.StatusFound
 				invoiceResponseModel.Status = "Found"
 			} else {
 				status = http.StatusCreated
 				invoiceResponseModel.Status = "OK"
-				invoiceResponseModel.InvoiceCode = invoice.Code
-				invoiceResponseModel.Number = invoice.No
-				invoiceResponseModel.Amount = invoice.Amount
-				invoiceResponseModel.Date = invoice.Date
-				invoiceResponseModel.CreateDate = domain.JsonDashTime(invoice.CreateDate)
 			}
 		} else {
 			status = http.StatusBadRequest

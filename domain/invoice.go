@@ -3,32 +3,32 @@ package domain
 import (
 	"fmt"
 	"time"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/golang/glog"
 )
 
 const (
-	InvoiceKeyPattern = "invoice::%s::%s::%s"
+	InvoiceKeyPattern  = "invoice::%s::%s::%s"
 	InvoiceKeysPattern = "invoice::%s::*"
 )
 
-/*
-invoice domain
-*/
+//Invoice domain
 type Invoice struct {
-	Code       string
-	No         string
-	Amount     string
-	Date       JsonDashTime
-	CreateDate time.Time
+	Code         string
+	No           string
+	Amount       string
+	Date         *JsonTime `json:",omitempty"`
+	SubmitPerson string    `json:",omitempty"`
+	Note         string    `json:",omitempty"`
+	CreateDate   time.Time
 }
 
-
-func QueryAllInvoices(openid string, conn redis.Conn) (invoiceList []Invoice, err error){
+func QueryAllInvoices(openid string, conn redis.Conn) (invoiceList []Invoice, err error) {
 	if result, err1 := conn.Do("KEYS", fmt.Sprintf(InvoiceKeysPattern, openid)); err1 == nil {
 		keyList := result.([]interface{})
 		if len(keyList) > 0 {
-			invoiceList = make([]Invoice,len(keyList))
+			invoiceList = make([]Invoice, len(keyList))
 			for i, invoiceKey := range keyList {
 				invoiceB, _ := redis.Bytes(conn.Do("GET", invoiceKey))
 				invoice := new(Invoice)
@@ -72,7 +72,7 @@ func (invoice *Invoice) CreateNewInvoice(openid string, conn redis.Conn) (bool, 
 			}
 		}
 	} else {
-			return false, err1
+		return false, err1
 	}
 	return false, err
 }

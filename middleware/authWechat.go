@@ -8,12 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//WechatBaseModel response to http request
 type WechatBaseModel struct {
 	Status    string `json:"status"`
 	Message   string `json:"message"`
 }
 
-//Check if login with wechat, wechat session ID is stored in json named "sessionid"
+//AuthWechat if login with wechat, wechat session ID is stored in json named "sessionid
 func AuthWechat() gin.HandlerFunc {
 	var wechatsession WechatBaseModel
 	return func(c *gin.Context) {
@@ -25,6 +26,7 @@ func AuthWechat() gin.HandlerFunc {
 				session := sessions.Default(c)
 				session.Set("openid", openid)
 				c.Next()
+				conn.Do("EXPIRE", sessionid, 1800)
 				return
 			} else {
 				wechatsession.Message = fmt.Sprintf("Can't get openid by sessionid %s, error is : %s", sessionid, err)

@@ -3,24 +3,21 @@ package controller
 import (
 	"github.com/galahade/invoice_record/middleware"
 	"github.com/galahade/invoice_record/domain"
-	"time"
 )
 
 type InvoiceResponseModel struct {
 	middleware.WechatBaseModel
-	InvoiceCode string `json:"code"`
-	Number string `json:"number"`
-	Amount string `json:"amount"`
-	Date domain.JsonDashTime `json:"date"`
-	CreateDate domain.JsonDashTime `json:"createDate"`
+    InvoiceModel
+	CreateDate domain.JsonTime `json:"createDate"`
 }
 
-type invoiceModel struct {
+type InvoiceModel struct {
 	InvoiceCode string `json:"code"`
 	Number string `json:"number"`
 	Amount string `json:"amount"`
-	Date domain.JsonTime `json:"date"`
-	CreateDate time.Time `json:"createDate"`
+	Date *domain.JsonTime `json:"date, omitempty"`
+	SubmitPerson string `json:"submit_person, omitempty"`
+	Note string `json:"note, omitempty"`
 }
 
 type InvoiceListResponseModel struct {
